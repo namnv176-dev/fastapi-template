@@ -6,7 +6,8 @@ services:
     # -------- Both of the following commands should be commented to run with nginx --------
 
     # -------- replace with comment to run with gunicorn --------
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "while true; do sleep 10; done"
     # command: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
     env_file:
       - ./.env
@@ -19,22 +20,22 @@ services:
       - db
       - redis
     volumes:
-      - ./:/code/app
-      - ./.env:/code/.env
+      - ./:/app
+      - ./.env:/.env
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: arq app.core.worker.settings.WorkerSettings
-    env_file:
-      - ./.env
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - ./:/code/app
-      - ./.env:/code/.env
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: arq app.core.worker.settings.WorkerSettings
+  #   env_file:
+  #     - ./.env
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   volumes:
+  #     - ./:/code/app
+  #     - ./.env:/code/.env
 
   db:
     image: postgres:13
@@ -63,33 +64,33 @@ services:
   #     - web
 
   #-------- uncomment to create first superuser --------
-  create_superuser:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - ./.env
-    depends_on:
-      - db
-      - web
-    command: python -m src.scripts.create_first_superuser
-    volumes:
-      - ./src:/code/src
+  # create_superuser:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ./.env
+  #   depends_on:
+  #     - db
+  #     - web
+  #   command: python -m src.scripts.create_first_superuser
+  #   volumes:
+      # - ./src:/code/src
 
   #-------- uncomment to run tests --------
-  pytest:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - ./.env
-    depends_on:
-      - db
-      - create_superuser
-      - redis
-    command: python -m pytest ./tests
-    volumes:
-      - .:/code
+  # pytest:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ./.env
+  #   depends_on:
+  #     - db
+  #     - create_superuser
+  #     - redis
+  #   command: python -m pytest ./tests
+  #   volumes:
+  #     - .:/code
   #-------- uncomment to create first tier --------
   # create_tier:
   #   build: 
