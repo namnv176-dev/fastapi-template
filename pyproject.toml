@@ -116,6 +116,6 @@ mypy_path = "src"
 explicit_package_bases = true
 
 [[tool.mypy.overrides]]
-module = "src.app.*"
+module = "src.*"
 disallow_untyped_defs = true
 

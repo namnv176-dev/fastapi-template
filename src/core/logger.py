@@ -7,7 +7,7 @@ from structlog.dev import ConsoleRenderer
 from structlog.processors import JSONRenderer
 from structlog.types import EventDict, Processor
 
-from ..core.config import settings
+from src.core.config import settings
 
 
 def drop_color_message_key(_, __, event_dict: EventDict) -> EventDict:

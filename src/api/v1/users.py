@@ -5,9 +5,9 @@ from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...api.dependencies import get_current_superuser, get_current_user
-from ...core.db.database import async_get_db
-from ...core.exceptions.http_exceptions import DuplicateValueException, ForbiddenException, NotFoundException
-from ...core.security import blacklist_token, get_password_hash, oauth2_scheme
+from src.core.db.database import async_get_db
+from src.core.exceptions.http_exceptions import DuplicateValueException, ForbiddenException, NotFoundException
+from src.core.security import blacklist_token, get_password_hash, oauth2_scheme
 from ...models.user import User
 from ...schemas.user import UserCreate, UserRead, UserUpdate
 

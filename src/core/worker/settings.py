@@ -6,8 +6,8 @@ from arq.connections import RedisSettings
 from arq.typing import WorkerSettingsType
 from arq.worker import check_health, run_worker
 
-from ...core.config import settings
-from ...core.logger import logging  # noqa: F401
+from src.core.config import settings
+from src.core.logger import logging  # noqa: F401
 from .functions import on_job_end, on_job_start, sample_background_task, shutdown, startup
 
 REDIS_QUEUE_HOST = settings.REDIS_QUEUE_HOST
@@ -39,4 +39,4 @@ def start_arq_service(check: bool = False, burst: int | None = None, watch: str 
 
 if __name__ == "__main__":
     start_arq_service()
-    # python -m src.app.core.worker.settings
+    # python -m src.core.worker.settings

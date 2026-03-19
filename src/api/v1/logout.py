@@ -3,9 +3,9 @@ from fastapi import APIRouter, Cookie, Depends, Response
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.db.database import async_get_db
-from ...core.exceptions.http_exceptions import UnauthorizedException
-from ...core.security import blacklist_tokens, oauth2_scheme
+from src.core.db.database import async_get_db
+from src.core.exceptions.http_exceptions import UnauthorizedException
+from src.core.security import blacklist_tokens, oauth2_scheme
 
 router = APIRouter(tags=["login"])
 
