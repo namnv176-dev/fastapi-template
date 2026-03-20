@@ -2,12 +2,11 @@
 name = "fastapi-template"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "python-dotenv>=1.0.0",
     "pydantic[email]>=2.12.5",
-    "fastapi>=0.109.1",
+    "fastapi[standard]>=0.109.1",
     "uvicorn>=0.27.0",
     "uvloop>=0.19.0",
     "httptools>=0.7.1",
