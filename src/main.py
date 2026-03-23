@@ -1,6 +1,6 @@
-from .api import router
-from .core.config import settings, EnvironmentOption
-from .core.setup import create_application
+from src.api_router import router
+from src.core.config import settings, EnvironmentOption
+from src.core.setup import create_application
 
 app = create_application(router=router, settings=settings)
 

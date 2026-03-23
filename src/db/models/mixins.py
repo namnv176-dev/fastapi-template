@@ -6,14 +6,18 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from uuid6 import uuid7
 
-
 class UUIDMixin:
+    """
+    Mixin to add a UUID primary key to a model.
+    """
     uuid: Mapped[uuid_pkg.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid7, server_default=text("gen_random_uuid()")
     )
 
-
 class TimestampMixin:
+    """
+    Mixin to add creation and update timestamps to a model.
+    """
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now(UTC), server_default=text("current_timestamp(0)")
     )
@@ -21,7 +25,9 @@ class TimestampMixin:
         DateTime, nullable=True, onupdate=datetime.now(UTC), server_default=text("current_timestamp(0)")
     )
 
-
 class SoftDeleteMixin:
+    """
+    Mixin to add soft deletion fields to a model.
+    """
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)

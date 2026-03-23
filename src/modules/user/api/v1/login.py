@@ -6,20 +6,19 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
-from src.core.db.database import async_get_db
+from src.dependencies.db import async_get_db
 from src.core.exceptions.http_exceptions import UnauthorizedException
 from src.core.schemas import Token
 from src.core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     TokenType,
-    authenticate_user,
     create_access_token,
     create_refresh_token,
     verify_token,
 )
+from src.modules.user.services.user_service import user_service
 
 router = APIRouter(tags=["login"])
-
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
@@ -27,14 +26,14 @@ async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
 ) -> dict[str, str]:
-    user = await authenticate_user(username_or_email=form_data.username, password=form_data.password, db=db)
+    user = await user_service.authenticate_user(db, username_or_email=form_data.username, password=form_data.password)
     if not user:
         raise UnauthorizedException("Wrong username, email or password.")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = await create_access_token(data={"sub": user["username"]}, expires_delta=access_token_expires)
+    access_token = await create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
 
-    refresh_token = await create_refresh_token(data={"sub": user["username"]})
+    refresh_token = await create_refresh_token(data={"sub": user.username})
     max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
     response.set_cookie(
@@ -42,7 +41,6 @@ async def login_for_access_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
-
 
 @router.post("/refresh")
 async def refresh_access_token(request: Request, db: AsyncSession = Depends(async_get_db)) -> dict[str, str]:

@@ -3,10 +3,12 @@ from datetime import datetime
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .database import Base
-
+from src.db.session import Base
 
 class TokenBlacklist(Base):
+    """
+    TokenBlacklist model to store invalidated tokens.
+    """
     __tablename__ = "token_blacklist"
 
     id: Mapped[int] = mapped_column("id", autoincrement=True, nullable=False, unique=True, primary_key=True, init=False)
