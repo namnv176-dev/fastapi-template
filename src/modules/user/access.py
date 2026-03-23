@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.modules.user.services.user_service import user_service
+
 from src.db.models.user import User
+from src.modules.user.services.user_service import user_service
+
 
 async def get_user_info(db: AsyncSession, username: str) -> User | None:
     """

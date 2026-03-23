@@ -1,7 +1,8 @@
-from typing import Any, Generic, TypeVar, List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from typing import Any, Generic, List, TypeVar
+
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.session import Base
 
@@ -17,7 +18,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: Any) -> Optional[ModelType]:
+    async def get(self, db: AsyncSession, id: Any) -> ModelType | None:
         query = select(self.model).where(self.model.id == id)
         result = await db.execute(query)
         return result.scalar_one_or_none()

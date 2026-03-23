@@ -1,11 +1,11 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter
 from sqlalchemy import exc
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.exceptions.http_exceptions import DuplicateValueException, NotFoundException, ForbiddenException
+from src.core.exceptions.http_exceptions import DuplicateValueException, ForbiddenException, NotFoundException
 from src.core.security import get_password_hash, verify_password
-from src.repositories.user_repo import user_repo
 from src.db.models.user import User
+from src.repositories.user_repo import user_repo
+
 
 class UserService:
     """
@@ -30,7 +30,7 @@ class UserService:
 
         # Hash password safely
         hashed_password = get_password_hash(password=user_data["password"])
-        
+
         # Pure repo call
         db_user = user_repo.create_user(
             db,
@@ -69,20 +69,20 @@ class UserService:
             if existing_uname:
                 raise DuplicateValueException("Username not available")
             user.username = update_data["username"]
-        
+
         for k, v in update_data.items():
             if k not in ["email", "username"]:
                 setattr(user, k, v)
-        
+
         db.add(user)
         try:
             await db.commit()
         except exc.SQLAlchemyError:
             await db.rollback()
             raise
-            
+
         return {"message": "User updated"}
-        
+
     async def delete_user(self, db: AsyncSession, username: str, current_user_username: str) -> dict:
         """
         Soft deletes a user.
@@ -90,10 +90,10 @@ class UserService:
         user = await user_repo.get_by_username(db, username)
         if not user:
             raise NotFoundException("User not found")
-            
+
         if user.username != current_user_username:
             raise ForbiddenException("Forbidden")
-            
+
         user.is_deleted = True
         db.add(user)
         try:
@@ -101,31 +101,31 @@ class UserService:
         except exc.SQLAlchemyError:
             await db.rollback()
             raise
-            
+
         return {"message": "User deleted"}
-        
+
     async def hard_delete_user(self, db: AsyncSession, username: str) -> dict:
         user = await user_repo.get_by_username(db, username)
         if not user:
             raise NotFoundException("User not found")
-            
+
         await db.delete(user)
         try:
             await db.commit()
         except exc.SQLAlchemyError:
             await db.rollback()
             raise
-            
+
         return {"message": "User deleted from the database"}
 
     async def authenticate_user(self, db: AsyncSession, username_or_email: str, password: str) -> User | bool:
         user = await user_repo.get_by_email_or_username(db, username_or_email)
         if not user:
             return False
-        
+
         if not await verify_password(password, user.hashed_password):
             return False
-            
+
         return user
 
 user_service = UserService()

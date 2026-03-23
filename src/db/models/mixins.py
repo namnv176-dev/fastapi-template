@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from uuid6 import uuid7
 
+
 class UUIDMixin:
     """
     Mixin to add a UUID primary key to a model.

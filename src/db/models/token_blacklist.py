@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.session import Base
 
+
 class TokenBlacklist(Base):
     """
     TokenBlacklist model to store invalidated tokens.

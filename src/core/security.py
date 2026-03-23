@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any
 
 import bcrypt
 from fastapi.security import OAuth2PasswordBearer
@@ -10,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
-from src.db.models.token_blacklist import TokenBlacklist
 from src.core.schemas import TokenData
+from src.db.models.token_blacklist import TokenBlacklist
 
 SECRET_KEY: SecretStr = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM

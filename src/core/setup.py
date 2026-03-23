@@ -12,11 +12,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
+from src.db.session import Base
+from src.db.session import async_engine as engine
 from src.dependencies.auth import get_current_superuser
+
 from ..middleware.client_cache_middleware import ClientCacheMiddleware
 from ..middleware.logger_middleware import LoggerMiddleware
-from src.db.models.user import User
-from src.db.models.token_blacklist import TokenBlacklist
 from .config import (
     AppSettings,
     ClientSideCacheSettings,
@@ -28,8 +29,6 @@ from .config import (
     RedisQueueSettings,
     settings,
 )
-from src.db.session import Base
-from src.db.session import async_engine as engine
 from .utils import cache, queue
 
 

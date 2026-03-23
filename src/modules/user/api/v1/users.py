@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dependencies.auth import get_current_superuser, get_current_user
-from src.dependencies.db import async_get_db
+from src.db.session import async_get_db
 from src.core.exceptions.http_exceptions import NotFoundException
 from src.core.security import blacklist_token, oauth2_scheme
 from src.db.models.user import User
