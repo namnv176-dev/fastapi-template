@@ -6,7 +6,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import settings
-from src.db.session import async_get_db
 from src.core.exceptions.http_exceptions import UnauthorizedException
 from src.core.schemas import Token
 from src.core.security import (
@@ -16,9 +15,11 @@ from src.core.security import (
     create_refresh_token,
     verify_token,
 )
-from src.modules.user.services.user_service import user_service
+from src.db.session import async_get_db
+from src.modules.user.services import user_service
 
 router = APIRouter(tags=["login"])
+
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
@@ -41,6 +42,7 @@ async def login_for_access_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.post("/refresh")
 async def refresh_access_token(request: Request, db: AsyncSession = Depends(async_get_db)) -> dict[str, str]:

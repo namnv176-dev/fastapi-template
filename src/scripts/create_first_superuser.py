@@ -6,10 +6,10 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, MetaData,
 from sqlalchemy.dialects.postgresql import UUID
 from uuid6 import uuid7  # 126
 
-from ..app.core.config import settings
-from ..app.core.db.database import AsyncSession, async_engine, local_session
-from ..app.core.security import get_password_hash
-from ..app.models.user import User
+from src.core.config import settings
+from src.core.security import get_password_hash
+from src.db.models.user import User
+from src.db.session import AsyncSession, async_engine, local_session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

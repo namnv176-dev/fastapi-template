@@ -1,39 +1,40 @@
-
-from sqlalchemy import select
+from sqlalchemy import not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.user import User
+from src.modules.user.schemas import UserCreate, UserUpdate
 from src.repositories.base import BaseRepository
 
 
-class UserRepository(BaseRepository[User, None, None]):
+class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     """
-    Repository for handling User database operations.
+    Repository for User operations.
+    Handles low-level data access and filtering.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__(User)
 
     async def get_by_email(self, db: AsyncSession, email: str) -> User | None:
-        query = select(self.model).where(self.model.email == email, not self.model.is_deleted)
+        """Fetch user by email if not deleted."""
+        query = select(self.model).where(self.model.email == email, not_(self.model.is_deleted))
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
     async def get_by_username(self, db: AsyncSession, username: str) -> User | None:
-        query = select(self.model).where(self.model.username == username, not self.model.is_deleted)
+        """Fetch user by username if not deleted."""
+        query = select(self.model).where(self.model.username == username, not_(self.model.is_deleted))
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_email_or_username(self, db: AsyncSession, identifier: str) -> User | None:
-        if "@" in identifier:
-            return await self.get_by_email(db, identifier)
-        return await self.get_by_username(db, identifier)
+    async def get_by_identifier(self, db: AsyncSession, identifier: str) -> User | None:
+        """Fetch user by identifier (either email or username)."""
+        query = select(self.model).where(
+            or_(self.model.email == identifier, self.model.username == identifier),
+            not_(self.model.is_deleted),
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
 
-    def create_user(self, db: AsyncSession, **kwargs) -> User:
-        """
-        Creates a new user and adds it to the session.
-        """
-        user = User(**kwargs)
-        db.add(user)
-        return user
 
 user_repo = UserRepository()

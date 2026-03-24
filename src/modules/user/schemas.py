@@ -57,9 +57,6 @@ class UserUpdateInternal(UserUpdate):
     updated_at: datetime
 
 
-
-
-
 class UserDelete(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -69,3 +66,7 @@ class UserDelete(BaseModel):
 
 class UserRestoreDeleted(BaseModel):
     is_deleted: bool
+
+
+class Job(BaseModel):
+    id: str
