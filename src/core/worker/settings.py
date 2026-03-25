@@ -8,6 +8,7 @@ from arq.worker import check_health, run_worker
 
 from src.core.config import settings
 from src.core.logger import logging  # noqa: F401
+
 from .functions import on_job_end, on_job_start, sample_background_task, shutdown, startup
 
 REDIS_QUEUE_HOST = settings.REDIS_QUEUE_HOST

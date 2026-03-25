@@ -4,13 +4,11 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from src.core.config import settings
-from src.core.db.database import Base
-import src.models  # noqa: F401
-
 
 from alembic import context
-
+from src.core.config import settings
+from src.db.session import Base
+import src.db.models
 
 DATABASE_URL = f"{settings.POSTGRES_ASYNC_PREFIX}{settings.POSTGRES_URI}"
 

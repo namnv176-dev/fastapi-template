@@ -1,15 +1,18 @@
 import uuid as uuid_pkg
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from uuid6 import uuid7
 
-from ..core.db.database import Base
+from src.db.session import Base
 
 
 class User(Base):
+    """
+    User model representing an application user.
+    """
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True, init=False)
@@ -24,6 +27,5 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default_factory=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
-    is_deleted: Mapped[bool] = mapped_column(default=False, index=True)
-    is_superuser: Mapped[bool] = mapped_column(default=False)
-
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)

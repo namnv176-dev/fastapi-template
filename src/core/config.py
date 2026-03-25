@@ -47,7 +47,7 @@ class PostgresSettings(DatabaseSettings):
     POSTGRES_ASYNC_PREFIX: str = "postgresql+asyncpg://"
     POSTGRES_URL: str | None = None
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field  # type: ignore[misc]
     @property
     def POSTGRES_URI(self) -> str:
         credentials = f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
@@ -70,7 +70,7 @@ class RedisCacheSettings(BaseSettings):
     REDIS_CACHE_HOST: str = "localhost"
     REDIS_CACHE_PORT: int = 6379
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field  # type: ignore[misc]
     @property
     def REDIS_CACHE_URL(self) -> str:
         return f"redis://{self.REDIS_CACHE_HOST}:{self.REDIS_CACHE_PORT}"
@@ -120,5 +120,6 @@ class Settings(
         case_sensitive=True,
         extra="ignore",
     )
+
 
 settings = Settings()
