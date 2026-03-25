@@ -116,7 +116,6 @@ Do not invent a different structure — replicate the `user` module pattern exac
 | Module | Responsibility |
 |--------|---------------|
 | `user` | Authentication, user profile management |
-| `post` | Post and comment CRUD |
 | `health` | Liveness & readiness health checks |
 
 ---
