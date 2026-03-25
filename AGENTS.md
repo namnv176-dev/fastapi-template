@@ -74,6 +74,7 @@ Read this file **in full** before taking any action. Read `PROJECT.md` for proje
 | Add or remove packages in `pyproject.toml` | Dependency changes must be deliberate |
 | Rename or delete a DB column without a migration | Breaking change — data loss risk |
 | Create a new module under `src/modules/` | Architectural decision, not an implementation detail |
+| Create a new handler under `src/infrastructure/` | Architectural decision — requires config and dependency changes |
 | Run `git commit`, `git push`, or any destructive git command | Never touch version control unless asked |
 | Delete any existing file | Confirm with user first |
 
@@ -96,6 +97,11 @@ src/
 ├── db/
 │   ├── models/              # SQLAlchemy ORM models
 │   └── session.py           # Async session factory
+├── infrastructure/          # Third-party service integrations (S3, LLM, RabbitMQ, …)
+│   ├── {service}_handler.py # Simple integration: single class encapsulating client + operations
+│   └── {service}/           # Complex integration: directory for services needing multiple files
+│       ├── handler.py       # Main interface — always the entry point for the service layer
+│       └── ...              # Additional files (e.g. guardrails.py, cache.py) supporting handler.py
 ├── modules/                 # Business domain modules
 │   └── {module}/
 │       ├── api/v1/          # FastAPI routers and endpoint functions
@@ -128,13 +134,14 @@ Follow these steps **in order** when implementing a new feature. Do not skip or 
 - [ ] 2. Identify the owning module. Do **not** create a new module without explicit approval.
 - [ ] 3. Define Pydantic schemas: `src/modules/{module}/schemas.py`
 - [ ] 4. Add repository method(s): `src/repositories/{entity}.py`
-- [ ] 5. Implement service logic: `src/modules/{module}/services.py`
-- [ ] 6. Expose via `access.py` **only if** other modules need to call this feature
-- [ ] 7. Create API endpoint: `src/modules/{module}/api/v1/`
-- [ ] 8. Register the router in `src/api_router.py` if it is a new router
-- [ ] 9. Write unit tests: `tests/unit/{module}/test_services.py`
-- [ ] 10. Write integration tests: `tests/integration/{module}/test_{feature}_api.py`
-- [ ] 11. Run quality checks: `uv run ruff check . --fix && uv run mypy src && pytest tests/ -x`
+- [ ] 5. If the feature requires a third-party service, create `src/infrastructure/{service}_handler.py` (simple) or `src/infrastructure/{service}/handler.py` (complex). The handler class encapsulates both client initialisation and business operations. Update `src/core/config.py` **only if new env vars are needed and the user has approved**.
+- [ ] 6. Implement service logic: `src/modules/{module}/services.py`
+- [ ] 7. Expose via `access.py` **only if** other modules need to call this feature
+- [ ] 8. Create API endpoint: `src/modules/{module}/api/v1/`
+- [ ] 9. Register the router in `src/api_router.py` if it is a new router
+- [ ] 10. Write unit tests: `tests/unit/{module}/test_services.py`
+- [ ] 11. Write integration tests: `tests/integration/{module}/test_{feature}_api.py`
+- [ ] 12. Run quality checks: `uv run ruff check . --fix && uv run mypy src && pytest tests/ -x`
 
 ---
 
@@ -381,6 +388,98 @@ async def get_user(db: AsyncSession, user_id: int) -> User | None:
 - **No side effects**: Functions return values. Avoid hidden state mutations.
 - **No `None` returns on critical paths**: Raise an exception instead.
 - **Structured logging**: Use `logger.info("event", extra={"key": value})` at service boundaries.
+
+---
+
+### 6.10 Infrastructure Layer
+
+**Purpose**: `src/infrastructure/` is the **only** place where third-party service integrations live (e.g., AWS S3, LLM providers, RabbitMQ, SendGrid). It acts as an anti-corruption layer between external SDKs and the application core.
+
+**Two allowed layouts — choose based on complexity:**
+
+```
+# Simple integration (single file)
+src/infrastructure/
+└── {service}_handler.py     # One class: client init + all business operations
+
+# Complex integration (directory, for services needing multiple supporting files)
+src/infrastructure/{service}/
+├── handler.py               # Main interface — the ONLY entry point for the service layer
+├── guardrails.py            # Example supporting file
+├── cache.py                 # Example supporting file
+└── ...                      # Any additional helpers; never imported by services directly
+```
+
+> Use the **single-file** layout by default. Expand to a **directory** only when the service has legitimately separate concerns (e.g., an LLM integration with guardrails, prompt caching, and streaming). The `handler.py` (or `{service}_handler.py`) is always the sole public interface.
+
+**Rules:**
+
+1. **Single class per handler file** — the handler class owns both client initialisation (in `__init__`) and all business operations as methods. Read all credentials from `src/core/config.py`. Never hard-code credentials.
+2. **Business operations in the handler** — implement domain-level operations (e.g., `upload_file`, `send_message`, `call_llm`) as methods on the handler class. Keep each method ≤ 30 lines and single-responsibility.
+3. **Service layer only** — `src/modules/{module}/services.py` is the **only** layer allowed to import from `src/infrastructure/`. Routers, repositories, and schemas must never touch infrastructure directly.
+4. **`handler.py` is the public interface** — for directory-based integrations, only `handler.py` may be imported by the service layer. All other files in the directory are internal implementation details.
+5. **Env vars** — if a new integration requires new environment variables, you MUST ask the user for approval before modifying `src/core/config.py` (see Forbidden Actions).
+
+```python
+# ✅ GOOD — simple integration: single class encapsulates client + operations
+# src/infrastructure/s3_handler.py
+import boto3
+from src.core.config import settings
+
+class S3Handler:
+    def __init__(self) -> None:
+        self._client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION,
+        )
+
+    async def upload_file(self, file_bytes: bytes, key: str) -> str:
+        self._client.put_object(Bucket=settings.S3_BUCKET, Key=key, Body=file_bytes)
+        return f"https://{settings.S3_BUCKET}.s3.amazonaws.com/{key}"
+
+s3_handler = S3Handler()
+
+
+# ✅ GOOD — complex integration: directory with handler.py as the sole public interface
+# src/infrastructure/llm/handler.py
+from src.infrastructure.llm.guardrails import validate_prompt
+from src.infrastructure.llm.cache import get_cached_response, cache_response
+from src.core.config import settings
+
+class LLMHandler:
+    def __init__(self) -> None:
+        self._client = ...  # SDK client initialisation
+
+    async def complete(self, prompt: str) -> str:
+        cached = await get_cached_response(prompt)
+        if cached:
+            return cached
+        validated_prompt = validate_prompt(prompt)
+        response = await self._client.generate(validated_prompt)
+        await cache_response(prompt, response)
+        return response
+
+llm_handler = LLMHandler()
+
+
+# ✅ GOOD — service imports only the handler instance
+# src/modules/media/services.py
+from src.infrastructure.s3_handler import s3_handler
+
+async def create_media(file_bytes: bytes, filename: str) -> str:
+    return await s3_handler.upload_file(file_bytes, key=filename)
+
+
+# ❌ BAD — router imports infrastructure directly
+# src/modules/media/api/v1/media.py
+from src.infrastructure.s3_handler import s3_handler  # Violation!
+
+# ❌ BAD — service imports an internal supporting file, bypassing handler.py
+# src/modules/ai/services.py
+from src.infrastructure.llm.guardrails import validate_prompt  # Violation!
+```
 
 ---
 
