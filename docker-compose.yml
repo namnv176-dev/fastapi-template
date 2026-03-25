@@ -11,6 +11,7 @@ services:
     depends_on:
       - db
       - redis
+      - rabbitmq
     volumes:
       - ./:/app
 
@@ -29,6 +30,30 @@ services:
       - redis-data:/data
     ports:
       - 6379:6379
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    env_file:
+      - ./.env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A src.core.celery worker --loglevel=info
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    volumes:
+      - ./:/app
       #-------- uncomment to run with nginx --------
       # nginx:
       #   image: nginx:latest
@@ -85,5 +110,6 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  rabbitmq-data:
 
 

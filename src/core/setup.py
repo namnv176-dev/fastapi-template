@@ -5,8 +5,6 @@ from typing import Any
 import anyio
 import fastapi
 import redis.asyncio as redis
-from arq import create_pool
-from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
@@ -18,15 +16,16 @@ from src.dependencies.auth import get_current_superuser
 
 from ..middleware.client_cache_middleware import ClientCacheMiddleware
 from ..middleware.logger_middleware import LoggerMiddleware
+from .celery import celery_app
 from .config import (
     AppSettings,
+    CelerySettings,
     ClientSideCacheSettings,
     CORSSettings,
     DatabaseSettings,
     EnvironmentOption,
     EnvironmentSettings,
     RedisCacheSettings,
-    RedisQueueSettings,
     settings,
 )
 from .utils import cache, queue
@@ -50,13 +49,12 @@ async def close_redis_cache_pool() -> None:
 
 
 # -------------- queue --------------
-async def create_redis_queue_pool() -> None:
-    queue.pool = await create_pool(RedisSettings(host=settings.REDIS_QUEUE_HOST, port=settings.REDIS_QUEUE_PORT))
+async def setup_celery_queue() -> None:
+    queue.app = celery_app
 
 
-async def close_redis_queue_pool() -> None:
-    if queue.pool is not None:
-        await queue.pool.aclose()  # type: ignore
+async def close_celery_queue() -> None:
+    queue.app = None
 
 
 # -------------- application --------------
@@ -72,7 +70,7 @@ def lifespan_factory(
         | AppSettings
         | ClientSideCacheSettings
         | CORSSettings
-        | RedisQueueSettings
+        | CelerySettings
         | EnvironmentSettings
     ),
     create_tables_on_start: bool = True,
@@ -92,8 +90,8 @@ def lifespan_factory(
             if isinstance(settings, RedisCacheSettings):
                 await create_redis_cache_pool()
 
-            if isinstance(settings, RedisQueueSettings):
-                await create_redis_queue_pool()
+            if isinstance(settings, CelerySettings):
+                await setup_celery_queue()
 
             if create_tables_on_start:
                 await create_tables()
@@ -106,8 +104,8 @@ def lifespan_factory(
             if isinstance(settings, RedisCacheSettings):
                 await close_redis_cache_pool()
 
-            if isinstance(settings, RedisQueueSettings):
-                await close_redis_queue_pool()
+            if isinstance(settings, CelerySettings):
+                await close_celery_queue()
 
     return lifespan
 
@@ -121,7 +119,7 @@ def create_application(
         | AppSettings
         | ClientSideCacheSettings
         | CORSSettings
-        | RedisQueueSettings
+        | CelerySettings
         | EnvironmentSettings
     ),
     create_tables_on_start: bool = True,

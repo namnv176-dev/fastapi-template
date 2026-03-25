@@ -1,3 +1,3 @@
-from arq.connections import ArqRedis
+from celery import Celery
 
-pool: ArqRedis | None = None
+app: Celery | None = None

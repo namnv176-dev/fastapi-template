@@ -34,3 +34,15 @@ async def check_third_party_health() -> bool:
     except Exception as e:
         LOGGER.exception(f"3rd party health check failed with error: {e}")
         return False
+
+
+async def check_celery_health() -> bool:
+    try:
+        from .celery import celery_app
+        # This checks broker connectivity
+        with celery_app.broker_connection() as conn:
+            conn.ensure_connection(max_retries=1)
+        return True
+    except Exception as e:
+        LOGGER.exception(f"Celery health check failed with error: {e}")
+        return False

@@ -80,9 +80,18 @@ class ClientSideCacheSettings(BaseSettings):
     CLIENT_CACHE_MAX_AGE: int = 60
 
 
-class RedisQueueSettings(BaseSettings):
-    REDIS_QUEUE_HOST: str = "localhost"
-    REDIS_QUEUE_PORT: int = 6379
+class CelerySettings(BaseSettings):
+    RABBITMQ_HOST: str = "localhost"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "guest"
+    RABBITMQ_PASSWORD: str = "guest"
+    RABBITMQ_VHOST: str = "/"
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        return f"amqp://{self.RABBITMQ_USER}:{self.RABBITMQ_PASSWORD}@{self.RABBITMQ_HOST}:{self.RABBITMQ_PORT}{self.RABBITMQ_VHOST}"
+
 
 
 class EnvironmentOption(StrEnum):
@@ -109,11 +118,18 @@ class Settings(
     TestSettings,
     RedisCacheSettings,
     ClientSideCacheSettings,
-    RedisQueueSettings,
+    CelerySettings,
     EnvironmentSettings,
     CORSSettings,
     ConsoleLoggerSettings,
 ):
+    @computed_field  # type: ignore[misc]
+    @property
+    def CELERY_RESULT_BACKEND(self) -> str:
+        # Use sync postgres driver for Celery result backend via SQLAlchemy
+        # Since this class inherits from PostgresSettings, self.POSTGRES_URI is available
+        return f"db+{self.POSTGRES_SYNC_PREFIX}{self.POSTGRES_URI}"
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
         env_file_encoding="utf-8",
