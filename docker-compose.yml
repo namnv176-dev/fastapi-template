@@ -21,22 +21,22 @@ services:
       - ./.env
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
 
   redis:
     image: redis:alpine
     volumes:
       - redis-data:/data
-    ports:
-      - 6379:6379
+    # ports:
+    #   - 6379:6379
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
     env_file:
       - ./.env
     ports:
-      - "5672:5672"
+      #   - "5672:5672"
       - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
@@ -106,6 +106,20 @@ services:
       #   command: python -m src.scripts.create_first_tier
       #   volumes:
       #     - ./src:/code/src
+
+      # worker_2:
+      #   build:
+      #     context: .
+      #     dockerfile: Dockerfile
+      #   command: celery -A src.core.celery worker --loglevel=info
+      #   env_file:
+      #     - ./.env
+      #   depends_on:
+      #     - db
+      #     - redis
+      #     - rabbitmq
+      #   volumes:
+      #     - ./:/app
 
 volumes:
   postgres-data:

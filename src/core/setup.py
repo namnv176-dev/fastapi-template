@@ -147,7 +147,7 @@ def create_application(
     application.include_router(router)
 
     if isinstance(settings, ClientSideCacheSettings):
-        application.add_middleware(ClientCacheMiddleware, max_age=settings.CLIENT_CACHE_MAX_AGE)
+        application.add_middleware(ClientCacheMiddleware, max_age=settings.CLIENT_CACHE_MAX_AGE)  # type: ignore[arg-type]
 
     if isinstance(settings, CORSSettings):
         application.add_middleware(
@@ -157,7 +157,7 @@ def create_application(
             allow_methods=settings.CORS_METHODS,
             allow_headers=settings.CORS_HEADERS,
         )
-    application.add_middleware(LoggerMiddleware)
+    application.add_middleware(LoggerMiddleware)  # type: ignore[arg-type]
     if isinstance(settings, EnvironmentSettings):
         if settings.ENVIRONMENT != EnvironmentOption.PRODUCTION:
             docs_router = APIRouter()

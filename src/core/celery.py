@@ -21,4 +21,4 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks from modules
-celery_app.autodiscover_tasks(["src.core.worker"])
+celery_app.autodiscover_tasks(["src.core.worker"], related_name="functions")

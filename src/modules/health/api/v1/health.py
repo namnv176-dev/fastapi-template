@@ -59,6 +59,26 @@ async def readiness_check(
 
 @router.post("/health/task")
 async def trigger_task(name: str = "test") -> dict[str, str]:
-    from src.core.worker.functions import sample_background_task
-    task = sample_background_task.delay(name)
+    from src.core.worker.functions import sample_background_task, asample_background_task
+    # task = sample_background_task.delay(name)
+    task = asample_background_task.apply_async(args=[name])
     return {"task_id": task.id, "status": "triggered"}
+
+
+@router.post("/health/queue")
+async def trigger_task_on_custom_queue(queue_name: str, name: str = "test") -> dict[str, str]:
+    from src.core.worker.functions import sample_background_task
+    # This will force RabbitMQ to create the queue if it doesn't exist
+    task = sample_background_task.apply_async(args=[name], queue=queue_name)
+    return {"task_id": task.id, "status": "triggered", "queue": queue_name}
+
+
+@router.get("/health/task/{task_id}")
+async def get_task_status(task_id: str) -> dict[str, Any]:
+    from src.core.celery import celery_app
+    result = celery_app.AsyncResult(task_id)
+    return {
+        "task_id": task_id,
+        "status": result.status,
+        "result": str(result.result) if result.ready() else None,
+    }

@@ -19,7 +19,11 @@ class ForbiddenException(HTTPException):
 
 class UnauthorizedException(HTTPException):
     def __init__(self, detail: str = "Unauthorized"):
-        super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, headers={"WWW-Authenticate": "Bearer"}, detail=detail)
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            headers={"WWW-Authenticate": "Bearer"},
+            detail=detail,
+        )
 
 class UnprocessableEntityException(HTTPException):
     def __init__(self, detail: str = "Unprocessable Entity"):
