@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -6,12 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.session import Base
 
-ModelType = TypeVar("ModelType", bound=Base)
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
-
-class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class BaseRepository[ModelType: Base, CreateSchemaType: BaseModel, UpdateSchemaType: BaseModel]:
     """
     Base generic repository providing standard DB CRUD operations.
     Note: NO commit or rollback happens here per AI API Architecture rules.

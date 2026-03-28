@@ -1,12 +1,16 @@
 import uuid as uuid_pkg
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
 from src.db.session import Base
+
+if TYPE_CHECKING:
+    from src.db.models.chat import Conversation
 
 
 class User(Base):
@@ -29,3 +33,7 @@ class User(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    conversations: Mapped[list["Conversation"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", init=False
+    )
