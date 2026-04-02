@@ -101,6 +101,17 @@ class CORSSettings(BaseSettings):
     CORS_HEADERS: list[str] = ["*"]
 
 
+class LLMSettings(BaseSettings):
+    LLM_PROVIDER: str = "openai"  # openai, gemini, anthropic
+    LLM_MODEL: str = "gpt-4o"
+    OPENAI_API_KEY: SecretStr | None = None
+    GEMINI_API_KEY: SecretStr | None = None
+    ANTHROPIC_API_KEY: SecretStr | None = None
+    LLM_TEMPERATURE: float = 0.7
+    LLM_MAX_TOKENS: int | None = None
+    LLM_STREAMING: bool = True
+
+
 class Settings(
     AppSettings,
     PostgresSettings,
@@ -113,6 +124,7 @@ class Settings(
     EnvironmentSettings,
     CORSSettings,
     ConsoleLoggerSettings,
+    LLMSettings,
 ):
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
