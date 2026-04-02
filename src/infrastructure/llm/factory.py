@@ -32,7 +32,7 @@ class LLMFactory:
                 temperature=temperature,
                 max_completion_tokens=max_tokens,
                 streaming=streaming,
-                stream_options={"include_usage": True},
+                model_kwargs={"stream_options": {"include_usage": True}},
                 base_url="https://api.groq.com/openai/v1",
                 **kwargs,
             )

@@ -91,9 +91,6 @@ def lifespan_factory(
         try:
             if isinstance(settings, RedisCacheSettings):
                 await create_redis_cache_pool()
-                from src.infrastructure.llm import setup_llm_cache
-
-                setup_llm_cache()
 
             if isinstance(settings, RedisQueueSettings):
                 await create_redis_queue_pool()

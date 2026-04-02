@@ -1,6 +1,9 @@
 from collections.abc import AsyncGenerator
+from dataclasses import dataclass
+from pydantic import BaseModel, Field, field_validator
 from typing import Any
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.output_parsers import PydanticOutputParser, JsonOutputParser
 
 from src.core.config import settings
 from src.db.models.chat import ChatMessage
@@ -11,6 +14,7 @@ try:
     import tiktoken
 except ImportError:
     tiktoken = None  # type: ignore
+
 
 
 class LLMHandler:
@@ -40,6 +44,7 @@ class LLMHandler:
         history: list[ChatMessage],
         system_prompt: str | None = None,
         streaming: bool = True,
+        structured_output: dict | None = None,
     ) -> AsyncGenerator[dict[str, Any], None] | dict[str, Any]:
         """
         Interact with LLM using a pre-fetched history list.
@@ -48,6 +53,9 @@ class LLMHandler:
         guardrails.validate_input(message_content)
 
         messages = self._prepare_messages(history, message_content, system_prompt)
+
+        if structured_output:
+            return await self._invoke_response(messages, structured_output)
 
         if streaming:
             return self._stream_response(messages)
@@ -82,17 +90,24 @@ class LLMHandler:
             if hasattr(chunk, "usage_metadata") and chunk.usage_metadata:
                 yield {"type": "usage", "usage": chunk.usage_metadata}
 
-    async def _invoke_response(self, messages: list[BaseMessage]) -> dict[str, Any]:
+    async def _invoke_response(
+        self, messages: list[BaseMessage], structured_output: type[BaseModel] | None = None
+    ) -> dict[str, Any]:
         """Gets full content response and usage metadata from the LLM."""
-        response = await self._llm.ainvoke(messages)
-        content = str(response.content)
-        guardrails.validate_output(content)
+        if structured_output:
+            response = await self._llm.with_structured_output(
+                structured_output, 
+            ).ainvoke(messages)
+            return response
+        else:
+            response = await self._llm.ainvoke(messages)
+            content = str(response.content)
+            guardrails.validate_output(content)
+            usage = getattr(response, "usage_metadata", None)
+            return {"content": content, "usage": usage}
 
-        usage = getattr(response, "usage_metadata", None)
-        return {"content": content, "usage": usage}
-
-
-# llm_handler = LLMHandler()
+    
+llm_handler = LLMHandler()
 
 
 if __name__ == "__main__":
@@ -102,9 +117,9 @@ if __name__ == "__main__":
     system_prompt = "You are a helpful assistant about technology."
 
     async def main():
-        response = await llm_handler.chat("Hello, what is the capital of usa? tell me about the country.", [], system_prompt=system_prompt, streaming=True)
+        response = await llm_handler.chat("Hello, what is the capital of usa? tell me about the country.", [], system_prompt=system_prompt, structured_output=ComplaintExtraction)
         async for chunk in response:
             if chunk['type'] == 'content':
                 print(chunk['content'], end="")
-
+        print("\n")
     asyncio.run(main())
